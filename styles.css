@@ -172,6 +172,13 @@ textarea {
   accent-color: var(--accent);
 }
 
+.date-help {
+  margin-top: -4px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
 .range-date,
 .fuzzy-date {
   display: grid;
