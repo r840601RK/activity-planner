@@ -103,6 +103,13 @@ h2 {
   min-width: 220px;
 }
 
+.user-panel {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  align-items: end;
+  gap: 10px;
+}
+
 .user-chip span,
 label span {
   color: var(--muted);
@@ -371,6 +378,10 @@ label {
 
   .topbar,
   .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .user-panel {
     grid-template-columns: 1fr;
   }
 
