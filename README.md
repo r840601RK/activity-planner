@@ -38,10 +38,10 @@ const API_URL = "你的 Google Apps Script 網頁應用程式網址";
 預設使用者在第二行：
 
 ```js
-const DEFAULT_USER = "Roger";
+const DEFAULT_USER = "";
 ```
 
-也可以直接在網頁右上角修改使用者名稱。不同使用者會用同一張 Google Sheet，但前端讀取時會依照 `user` 篩選。
+網頁右上角的使用者名稱預設為空白。輸入使用者名稱後按「讀取活動」，前端會依照 `user` 篩選 Google Sheet 裡該使用者的活動。
 
 ## 分享碼邏輯
 
