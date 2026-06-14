@@ -362,6 +362,21 @@ label {
   color: #7f2d18;
 }
 
+.delete-button {
+  min-height: 28px;
+  padding: 0 8px;
+  border-color: #d9c4b9;
+  background: #fff7f3;
+  color: #8a3a24;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.delete-button:hover {
+  border-color: var(--warn);
+  background: #f6e8df;
+}
+
 .empty-state {
   padding: 32px;
   text-align: center;
