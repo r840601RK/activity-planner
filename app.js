@@ -1,5 +1,5 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbwmm__A8DmQuL8DPsWBjZcc5S09syJNxrpsvTvoAx2oWdVmw4j5BMN8sbLMLdL_gihV/exec";
-const DEFAULT_USER = "Roger";
+const DEFAULT_USER = "";
 const IMPORTED_STORAGE_KEY = "activityPlanner.importedActivities";
 const USER_STORAGE_KEY = "activityPlanner.user";
 
@@ -17,6 +17,7 @@ const state = {
 const els = {
   form: document.querySelector("#activityForm"),
   userName: document.querySelector("#userName"),
+  loadUserButton: document.querySelector("#loadUserButton"),
   title: document.querySelector("#title"),
   date: document.querySelector("#date"),
   startDate: document.querySelector("#startDate"),
@@ -44,12 +45,13 @@ const els = {
 init();
 
 function init() {
-  els.userName.value = localStorage.getItem(USER_STORAGE_KEY) || DEFAULT_USER;
+  els.userName.value = DEFAULT_USER;
   state.importedActivities = readImportedActivities();
 
   els.form.addEventListener("submit", handleAddActivity);
+  els.loadUserButton.addEventListener("click", loadActivities);
   els.refreshButton.addEventListener("click", loadActivities);
-  els.userName.addEventListener("change", handleUserChange);
+  els.userName.addEventListener("keydown", handleUserNameKeydown);
   els.makeShareCode.addEventListener("click", makeShareCode);
   els.copyShareCode.addEventListener("click", copyShareCode);
   els.importShareCode.addEventListener("click", importShareCode);
@@ -57,7 +59,8 @@ function init() {
   els.dateModeInputs.forEach((input) => input.addEventListener("change", updateDateMode));
 
   updateDateMode();
-  loadActivities();
+  renderActivities();
+  setStatus(els.formStatus, "請先輸入使用者名稱，然後按讀取活動。");
 }
 
 async function handleAddActivity(event) {
@@ -108,6 +111,14 @@ async function handleAddActivity(event) {
 
 async function loadActivities() {
   const user = getCurrentUser();
+  if (!user) {
+    state.ownActivities = [];
+    renderActivities();
+    setStatus(els.formStatus, "請先輸入使用者名稱。", true);
+    return;
+  }
+
+  localStorage.setItem(USER_STORAGE_KEY, user);
   setStatus(els.formStatus, "讀取中...");
 
   try {
@@ -131,6 +142,13 @@ function handleUserChange() {
   localStorage.setItem(USER_STORAGE_KEY, getCurrentUser());
   state.ownActivities = [];
   loadActivities();
+}
+
+function handleUserNameKeydown(event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    loadActivities();
+  }
 }
 
 function updateDateMode() {
@@ -414,7 +432,7 @@ function readImportedActivities() {
 }
 
 function getCurrentUser() {
-  return els.userName.value.trim() || DEFAULT_USER;
+  return els.userName.value.trim();
 }
 
 function normalizeDateValue(value) {
