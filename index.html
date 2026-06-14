@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>活動整理</title>
-    <link rel="stylesheet" href="./styles.css?v=20260614-2">
+    <link rel="stylesheet" href="./styles.css?v=20260614-3">
   </head>
   <body>
     <main class="app-shell">
@@ -13,10 +13,13 @@
           <h1>活動整理</h1>
           <p>新增、排序、檢查衝突，並用分享碼整合別人的活動。</p>
         </div>
-        <label class="user-chip">
-          <span>使用者</span>
-          <input id="userName" type="text" autocomplete="name" value="Roger">
-        </label>
+        <div class="user-panel">
+          <label class="user-chip">
+            <span>使用者</span>
+            <input id="userName" type="text" autocomplete="name" placeholder="輸入使用者名稱">
+          </label>
+          <button id="loadUserButton" type="button">讀取活動</button>
+        </div>
       </section>
 
       <section class="workspace">
@@ -129,6 +132,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=20260614-2"></script>
+    <script src="./app.js?v=20260614-3"></script>
   </body>
 </html>
