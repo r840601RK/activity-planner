@@ -253,6 +253,13 @@ function makeBadges(activity, conflictType) {
     badges.append(makeElement("span", "badge conflict", getConflictLabel(conflictType)));
   }
 
+  const deleteButton = document.createElement("button");
+  deleteButton.type = "button";
+  deleteButton.className = "delete-button";
+  deleteButton.textContent = "刪除";
+  deleteButton.addEventListener("click", () => deleteActivity(activity));
+  badges.append(deleteButton);
+
   return badges;
 }
 
@@ -323,6 +330,51 @@ function clearImportedActivities() {
   localStorage.removeItem(IMPORTED_STORAGE_KEY);
   renderActivities();
   setStatus(els.shareStatus, "已清除匯入活動。");
+}
+
+async function deleteActivity(activity) {
+  const message = activity.source === "own"
+    ? `確定要刪除「${activity.title}」嗎？這會從 Google Sheets 移除。`
+    : `確定要從畫面移除「${activity.title}」嗎？`;
+
+  if (!window.confirm(message)) return;
+
+  if (activity.source === "imported") {
+    state.importedActivities = state.importedActivities.filter((item) => item.id !== activity.id);
+    localStorage.setItem(IMPORTED_STORAGE_KEY, JSON.stringify(state.importedActivities));
+    renderActivities();
+    setStatus(els.shareStatus, "已從畫面移除匯入活動。");
+    return;
+  }
+
+  const user = getCurrentUser();
+  if (!user) {
+    setStatus(els.formStatus, "請先輸入使用者名稱。", true);
+    return;
+  }
+
+  setStatus(els.formStatus, "刪除中...");
+
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "delete",
+        id: activity.id,
+        user,
+      }),
+    });
+
+    const result = await readJsonResponse(response);
+    if (!response.ok || !result.ok) {
+      throw new Error(result.error || "Google Sheets 沒有回傳成功狀態");
+    }
+
+    setStatus(els.formStatus, "已刪除，活動列表已更新。");
+    await loadActivities();
+  } catch (error) {
+    setStatus(els.formStatus, `刪除失敗：${error.message}`, true);
+  }
 }
 
 function getSortedActivities() {
