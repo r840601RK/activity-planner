@@ -135,9 +135,15 @@ function handleUserChange() {
 
 function updateDateMode() {
   const mode = getDateMode();
-  els.exactDateField.hidden = mode !== "exact";
-  els.rangeDateField.hidden = mode !== "range";
-  els.fuzzyDateField.hidden = mode !== "fuzzy";
+  setDateFieldVisible(els.exactDateField, mode === "exact");
+  setDateFieldVisible(els.rangeDateField, mode === "range");
+  setDateFieldVisible(els.fuzzyDateField, mode === "fuzzy");
+}
+
+function setDateFieldVisible(element, isVisible) {
+  element.hidden = !isVisible;
+  element.classList.toggle("is-hidden", !isVisible);
+  element.style.display = isVisible ? "" : "none";
 }
 
 function getDateMode() {
