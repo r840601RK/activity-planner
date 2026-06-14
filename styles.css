@@ -145,7 +145,7 @@ textarea {
 
 .date-mode {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -172,6 +172,7 @@ textarea {
   accent-color: var(--accent);
 }
 
+.range-date,
 .fuzzy-date {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(120px, 0.45fr);
@@ -367,6 +368,7 @@ label {
   }
 
   .date-mode,
+  .range-date,
   .fuzzy-date {
     grid-template-columns: 1fr;
   }
