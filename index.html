@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>活動整理</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="topbar" aria-label="使用者設定">
+        <div>
+          <h1>活動整理</h1>
+          <p>新增、排序、檢查衝突，並用分享碼整合別人的活動。</p>
+        </div>
+        <label class="user-chip">
+          <span>使用者</span>
+          <input id="userName" type="text" autocomplete="name" value="Roger">
+        </label>
+      </section>
+
+      <section class="workspace">
+        <form id="activityForm" class="panel form-panel">
+          <div class="panel-heading">
+            <h2>新增活動</h2>
+            <button class="icon-button" type="button" id="refreshButton" title="重新整理">↻</button>
+          </div>
+
+          <label>
+            <span>活動名稱</span>
+            <input id="title" type="text" placeholder="例如：開會、聚餐、健身" required>
+          </label>
+
+          <div class="date-mode">
+            <label class="radio-card">
+              <input type="radio" name="dateMode" value="exact" checked>
+              <span>確定日期</span>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="dateMode" value="fuzzy">
+              <span>月份區間</span>
+            </label>
+          </div>
+
+          <label id="exactDateField">
+            <span>日期</span>
+            <input id="date" type="date">
+          </label>
+
+          <div id="fuzzyDateField" class="fuzzy-date" hidden>
+            <label>
+              <span>月份</span>
+              <input id="month" type="month">
+            </label>
+            <label>
+              <span>區間</span>
+              <select id="datePeriod">
+                <option value="early">月初</option>
+                <option value="middle">月中</option>
+                <option value="late">月末</option>
+              </select>
+            </label>
+          </div>
+
+          <label>
+            <span>備註</span>
+            <textarea id="note" rows="4" placeholder="時間、地點或其他補充"></textarea>
+          </label>
+
+          <button class="primary-button" type="submit">新增到 Google Sheets</button>
+          <p id="formStatus" class="status-text" role="status"></p>
+        </form>
+
+        <section class="panel share-panel" aria-label="分享碼工具">
+          <div class="panel-heading">
+            <h2>分享活動</h2>
+          </div>
+
+          <div class="share-actions">
+            <button id="makeShareCode" type="button">產生分享碼</button>
+            <button id="copyShareCode" type="button">複製</button>
+          </div>
+          <textarea id="shareCode" rows="5" readonly placeholder="勾選活動後產生分享碼"></textarea>
+
+          <label>
+            <span>貼上別人的分享碼</span>
+            <textarea id="importCode" rows="5" placeholder="把對方給你的分享碼貼在這裡"></textarea>
+          </label>
+          <div class="share-actions">
+            <button id="importShareCode" type="button">整合到我的畫面</button>
+            <button id="clearImported" type="button">清除匯入活動</button>
+          </div>
+          <p id="shareStatus" class="status-text" role="status"></p>
+        </section>
+      </section>
+
+      <section class="timeline-section">
+        <div class="list-toolbar">
+          <div>
+            <h2>活動列表</h2>
+            <p id="summaryText">正在載入資料...</p>
+          </div>
+          <div class="legend" aria-label="圖例">
+            <span><i class="dot own"></i>我的活動</span>
+            <span><i class="dot imported"></i>匯入活動</span>
+            <span><i class="dot conflict"></i>日期衝突</span>
+          </div>
+        </div>
+
+        <div id="activityList" class="activity-list" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

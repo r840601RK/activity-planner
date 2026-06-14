@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>活動整理 Demo</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="topbar" aria-label="使用者設定">
+        <div>
+          <h1>活動整理</h1>
+          <p>新增、排序、檢查衝突，並用分享碼整合別人的活動。</p>
+        </div>
+        <label class="user-chip">
+          <span>使用者</span>
+          <input type="text" value="Roger">
+        </label>
+      </section>
+
+      <section class="workspace">
+        <form class="panel form-panel">
+          <div class="panel-heading">
+            <h2>新增活動</h2>
+            <button class="icon-button" type="button" title="重新整理">↻</button>
+          </div>
+
+          <label>
+            <span>活動名稱</span>
+            <input type="text" placeholder="例如：開會、聚餐、健身">
+          </label>
+
+          <div class="date-mode">
+            <label class="radio-card">
+              <input type="radio" name="demoDateMode" checked>
+              <span>確定日期</span>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="demoDateMode">
+              <span>月份區間</span>
+            </label>
+          </div>
+
+          <label>
+            <span>日期</span>
+            <input type="date">
+          </label>
+
+          <div class="fuzzy-date">
+            <label>
+              <span>月份</span>
+              <input type="month" value="2026-07">
+            </label>
+            <label>
+              <span>區間</span>
+              <select>
+                <option>月初</option>
+                <option>月中</option>
+                <option>月末</option>
+              </select>
+            </label>
+          </div>
+
+          <label>
+            <span>備註</span>
+            <textarea rows="4" placeholder="時間、地點或其他補充"></textarea>
+          </label>
+
+          <button class="primary-button" type="button">新增到 Google Sheets</button>
+          <p class="status-text">示範資料，不會寫入 Google Sheets。</p>
+        </form>
+
+        <section class="panel share-panel" aria-label="分享碼工具">
+          <div class="panel-heading">
+            <h2>分享活動</h2>
+          </div>
+          <div class="share-actions">
+            <button type="button">產生分享碼</button>
+            <button type="button">複製</button>
+          </div>
+          <textarea rows="5" readonly placeholder="勾選活動後產生分享碼"></textarea>
+          <label>
+            <span>貼上別人的分享碼</span>
+            <textarea rows="5" placeholder="把對方給你的分享碼貼在這裡"></textarea>
+          </label>
+          <div class="share-actions">
+            <button type="button">整合到我的畫面</button>
+            <button type="button">清除匯入活動</button>
+          </div>
+        </section>
+      </section>
+
+      <section class="timeline-section">
+        <div class="list-toolbar">
+          <div>
+            <h2>活動列表</h2>
+            <p>共 4 筆活動，其中 3 筆有同日或可能衝突。</p>
+          </div>
+          <div class="legend" aria-label="圖例">
+            <span><i class="dot own"></i>我的活動</span>
+            <span><i class="dot imported"></i>匯入活動</span>
+            <span><i class="dot conflict"></i>日期衝突</span>
+          </div>
+        </div>
+
+        <div class="activity-list">
+          <article class="activity-card own conflict">
+            <input type="checkbox">
+            <div class="activity-date">2026/07 月初</div>
+            <div class="activity-body">
+              <div class="activity-title">專案討論</div>
+              <div class="activity-note">日期還沒完全確定，只知道會在月初。</div>
+            </div>
+            <div class="badges">
+              <span class="badge">我的</span>
+              <span class="badge">日期未定</span>
+              <span class="badge conflict">可能衝突</span>
+            </div>
+          </article>
+
+          <article class="activity-card imported conflict">
+            <input type="checkbox">
+            <div class="activity-date">2026年7月5日 週日</div>
+            <div class="activity-body">
+              <div class="activity-title">朋友聚餐</div>
+              <div class="activity-note">對方分享的活動，落在 7 月月初。</div>
+            </div>
+            <div class="badges">
+              <span class="badge">匯入：Alex</span>
+              <span class="badge conflict">可能衝突</span>
+            </div>
+          </article>
+
+          <article class="activity-card own conflict">
+            <input type="checkbox">
+            <div class="activity-date">2026年7月18日 週六</div>
+            <div class="activity-body">
+              <div class="activity-title">工作坊</div>
+              <div class="activity-note">同一天已有另一筆匯入活動。</div>
+            </div>
+            <div class="badges">
+              <span class="badge">我的</span>
+              <span class="badge conflict">同日衝突</span>
+            </div>
+          </article>
+
+          <article class="activity-card imported conflict">
+            <input type="checkbox">
+            <div class="activity-date">2026年7月18日 週六</div>
+            <div class="activity-body">
+              <div class="activity-title">家人行程</div>
+              <div class="activity-note">對方分享的確定日期。</div>
+            </div>
+            <div class="badges">
+              <span class="badge">匯入：Alex</span>
+              <span class="badge conflict">同日衝突</span>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
