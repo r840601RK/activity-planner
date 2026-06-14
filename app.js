@@ -19,6 +19,8 @@ const els = {
   userName: document.querySelector("#userName"),
   title: document.querySelector("#title"),
   date: document.querySelector("#date"),
+  startDate: document.querySelector("#startDate"),
+  endDate: document.querySelector("#endDate"),
   month: document.querySelector("#month"),
   datePeriod: document.querySelector("#datePeriod"),
   note: document.querySelector("#note"),
@@ -34,6 +36,7 @@ const els = {
   activityList: document.querySelector("#activityList"),
   summaryText: document.querySelector("#summaryText"),
   exactDateField: document.querySelector("#exactDateField"),
+  rangeDateField: document.querySelector("#rangeDateField"),
   fuzzyDateField: document.querySelector("#fuzzyDateField"),
   dateModeInputs: Array.from(document.querySelectorAll('input[name="dateMode"]')),
 };
@@ -70,6 +73,13 @@ async function handleAddActivity(event) {
 
   if (!data.user || !data.title || !data.date) {
     setStatus(els.formStatus, "請填寫使用者、活動名稱和日期。", true);
+    return;
+  }
+
+  try {
+    data.date = validateDateValue(data.date);
+  } catch (error) {
+    setStatus(els.formStatus, error.message, true);
     return;
   }
 
@@ -126,6 +136,7 @@ function handleUserChange() {
 function updateDateMode() {
   const mode = getDateMode();
   els.exactDateField.hidden = mode !== "exact";
+  els.rangeDateField.hidden = mode !== "range";
   els.fuzzyDateField.hidden = mode !== "fuzzy";
 }
 
@@ -134,6 +145,11 @@ function getDateMode() {
 }
 
 function getDateValue() {
+  if (getDateMode() === "range") {
+    if (!els.startDate.value || !els.endDate.value) return "";
+    return `${els.startDate.value}..${els.endDate.value}`;
+  }
+
   if (getDateMode() === "fuzzy") {
     return els.month.value ? `${els.month.value}|${els.datePeriod.value}` : "";
   }
@@ -153,7 +169,7 @@ function renderActivities() {
   }
 
   const conflictCount = Array.from(conflictMap.values()).filter(Boolean).length;
-  els.summaryText.textContent = `共 ${activities.length} 筆活動，其中 ${conflictCount} 筆有同日或可能衝突。`;
+  els.summaryText.textContent = `共 ${activities.length} 筆活動，其中 ${conflictCount} 筆有同日、區間重疊或可能衝突。`;
 
   const fragment = document.createDocumentFragment();
   activities.forEach((activity) => {
@@ -205,8 +221,12 @@ function makeBadges(activity, conflictType) {
     badges.append(makeElement("span", "badge", "日期未定"));
   }
 
+  if (activity.dateInfo.type === "range") {
+    badges.append(makeElement("span", "badge", "日期區間"));
+  }
+
   if (conflictType) {
-    badges.append(makeElement("span", "badge conflict", conflictType === "exact" ? "同日衝突" : "可能衝突"));
+    badges.append(makeElement("span", "badge conflict", getConflictLabel(conflictType)));
   }
 
   return badges;
@@ -320,11 +340,36 @@ function getConflictType(a, b) {
     return a.raw === b.raw ? "exact" : "";
   }
 
-  if (a.month === b.month && a.period === b.period) {
-    return "possible";
+  if (dateRangesOverlap(a, b)) {
+    if (a.type === "fuzzy" || b.type === "fuzzy") return "possible";
+    return "overlap";
   }
 
   return "";
+}
+
+function getConflictLabel(type) {
+  if (type === "exact") return "同日衝突";
+  if (type === "overlap") return "區間重疊";
+  return "可能衝突";
+}
+
+function dateRangesOverlap(a, b) {
+  if (!a.startDate || !a.endDate || !b.startDate || !b.endDate) {
+    return false;
+  }
+
+  return a.startDate <= b.endDate && b.startDate <= a.endDate;
+}
+
+function validateDateValue(dateValue) {
+  const info = parseDateInfo(dateValue);
+
+  if (info.type === "range" && info.startDate > info.endDate) {
+    throw new Error("結束日期不能早於開始日期");
+  }
+
+  return dateValue;
 }
 
 function normalizeOwnActivity(activity) {
@@ -369,6 +414,7 @@ function getCurrentUser() {
 function normalizeDateValue(value) {
   if (!value) return "";
   if (typeof value === "string" && /^\d{4}-\d{2}\|(early|middle|late)$/.test(value)) return value;
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}\.\.\d{4}-\d{2}-\d{2}$/.test(value)) return value;
   if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
 
   const date = new Date(value);
@@ -382,12 +428,29 @@ function parseDateInfo(value) {
 
   if (fuzzyMatch) {
     const [, month, period] = fuzzyMatch;
+    const bounds = getPeriodBounds(month, period);
     return {
       raw,
       type: "fuzzy",
       month,
       period,
+      startDate: bounds.startDate,
+      endDate: bounds.endDate,
       sortKey: `${month}-${PERIODS[period].sortDay}`,
+    };
+  }
+
+  const rangeMatch = raw.match(/^(\d{4}-\d{2}-\d{2})\.\.(\d{4}-\d{2}-\d{2})$/);
+  if (rangeMatch) {
+    const [, startDate, endDate] = rangeMatch;
+    return {
+      raw,
+      type: "range",
+      month: startDate.slice(0, 7),
+      period: "",
+      startDate,
+      endDate,
+      sortKey: startDate,
     };
   }
 
@@ -399,6 +462,8 @@ function parseDateInfo(value) {
       type: "exact",
       month,
       period: getPeriodForDay(Number(dayText)),
+      startDate: raw,
+      endDate: raw,
       sortKey: raw,
     };
   }
@@ -408,7 +473,28 @@ function parseDateInfo(value) {
     type: "unknown",
     month: "",
     period: "",
+    startDate: "",
+    endDate: "",
     sortKey: raw || "9999-99-99",
+  };
+}
+
+function getPeriodBounds(month, period) {
+  if (period === "early") {
+    return { startDate: `${month}-01`, endDate: `${month}-10` };
+  }
+
+  if (period === "middle") {
+    return { startDate: `${month}-11`, endDate: `${month}-20` };
+  }
+
+  const lastDay = new Date(`${month}-01T00:00:00`);
+  lastDay.setMonth(lastDay.getMonth() + 1);
+  lastDay.setDate(0);
+
+  return {
+    startDate: `${month}-21`,
+    endDate: `${month}-${String(lastDay.getDate()).padStart(2, "0")}`,
   };
 }
 
@@ -426,12 +512,26 @@ function formatActivityDate(info) {
     return `${year}/${month} ${PERIODS[info.period].label}`;
   }
 
+  if (info.type === "range") {
+    return `${formatShortDate(info.startDate)} - ${formatShortDate(info.endDate)}`;
+  }
+
   if (info.type !== "exact") return info.raw;
 
   const date = new Date(`${info.raw}T00:00:00`);
   if (Number.isNaN(date.getTime())) return info.raw;
   return new Intl.DateTimeFormat("zh-Hant", {
     year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    weekday: "short",
+  }).format(date);
+}
+
+function formatShortDate(value) {
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("zh-Hant", {
     month: "2-digit",
     day: "2-digit",
     weekday: "short",
