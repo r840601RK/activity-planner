@@ -31,8 +31,7 @@ Who has access: Anyone
 
 API 位置在 `app.js` 第一行：
 
-```js
-const API_URL = "https://script.google.com/macros/s/AKfycbwmm__A8DmQuL8DPsWBjZcc5S09syJNxrpsvTvoAx2oWdVmw4j5BMN8sbLMLdL_gihV/exec";
+```js;
 ```
 
 預設使用者在第二行：
