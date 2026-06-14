@@ -48,6 +48,7 @@ const DEFAULT_USER = "";
 - 勾選活動並產生分享碼：只會把選到的活動編碼成文字。
 - 貼上別人的分享碼：只會整合到目前瀏覽器畫面與 localStorage。
 - 匯入活動不會寫入 Google Sheets，也不會改到對方資料。
+- 刪除自己的活動會呼叫 Apps Script 從 Google Sheets 移除；刪除匯入活動只會從目前瀏覽器畫面移除。
 
 ## 日期格式
 
