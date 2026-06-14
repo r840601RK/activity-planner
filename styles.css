@@ -292,7 +292,7 @@ label {
 
 .activity-card {
   display: grid;
-  grid-template-columns: auto minmax(86px, 120px) 1fr auto;
+  grid-template-columns: auto minmax(190px, 260px) 1fr auto;
   gap: 12px;
   align-items: start;
   padding: 14px;
@@ -322,6 +322,7 @@ label {
 .activity-date {
   font-weight: 650;
   color: var(--ink);
+  white-space: nowrap;
 }
 
 .activity-body {
@@ -409,6 +410,10 @@ label {
   .activity-date,
   .badges {
     grid-column: 2;
+  }
+
+  .activity-date {
+    white-space: normal;
   }
 
   .badges {
