@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>活動整理</title>
-    <link rel="stylesheet" href="./styles.css">
+    <link rel="stylesheet" href="./styles.css?v=20260614-2">
   </head>
   <body>
     <main class="app-shell">
@@ -49,12 +49,12 @@
             已確定哪一天就選確定日期；連續多天的活動選日期區間；只知道大概在月初、月中或月末時選月份區間。
           </p>
 
-          <label id="exactDateField">
+          <label id="exactDateField" class="date-field">
             <span>日期</span>
             <input id="date" type="date">
           </label>
 
-          <div id="rangeDateField" class="range-date" hidden>
+          <div id="rangeDateField" class="date-field range-date" hidden>
             <label>
               <span>開始日期</span>
               <input id="startDate" type="date">
@@ -65,7 +65,7 @@
             </label>
           </div>
 
-          <div id="fuzzyDateField" class="fuzzy-date" hidden>
+          <div id="fuzzyDateField" class="date-field fuzzy-date" hidden>
             <label>
               <span>月份</span>
               <input id="month" type="month">
@@ -129,6 +129,6 @@
       </section>
     </main>
 
-    <script src="./app.js"></script>
+    <script src="./app.js?v=20260614-2"></script>
   </body>
 </html>
