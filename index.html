@@ -37,6 +37,10 @@
               <span>確定日期</span>
             </label>
             <label class="radio-card">
+              <input type="radio" name="dateMode" value="range">
+              <span>日期區間</span>
+            </label>
+            <label class="radio-card">
               <input type="radio" name="dateMode" value="fuzzy">
               <span>月份區間</span>
             </label>
@@ -46,6 +50,17 @@
             <span>日期</span>
             <input id="date" type="date">
           </label>
+
+          <div id="rangeDateField" class="range-date" hidden>
+            <label>
+              <span>開始日期</span>
+              <input id="startDate" type="date">
+            </label>
+            <label>
+              <span>結束日期</span>
+              <input id="endDate" type="date">
+            </label>
+          </div>
 
           <div id="fuzzyDateField" class="fuzzy-date" hidden>
             <label>
