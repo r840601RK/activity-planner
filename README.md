@@ -31,7 +31,8 @@ Who has access: Anyone
 
 API 位置在 `app.js` 第一行：
 
-```js;
+```js
+const API_URL = "https://script.google.com/macros/s/AKfycbwmm__A8DmQuL8DPsWBjZcc5S09syJNxrpsvTvoAx2oWdVmw4j5BMN8sbLMLdL_gihV/exec";
 ```
 
 預設使用者在第二行：
@@ -56,6 +57,12 @@ const DEFAULT_USER = "Roger";
 2026-07-18
 ```
 
+日期區間會存在同一個 `date` 欄位：
+
+```text
+2026-06-14..2026-06-18
+```
+
 月份區間會存在同一個 `date` 欄位：
 
 ```text
@@ -64,4 +71,4 @@ const DEFAULT_USER = "Roger";
 2026-07|late
 ```
 
-前端會顯示為 `2026/07 月初`、`2026/07 月中`、`2026/07 月末`，並標示可能衝突。
+前端會顯示確定日期、日期區間、`2026/07 月初`、`2026/07 月中`、`2026/07 月末`，並標示同日衝突、區間重疊或可能衝突。
