@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>活動整理</title>
-    <link rel="stylesheet" href="./styles.css?v=20260614-5">
+    <link rel="stylesheet" href="./styles.css?v=20260615-1">
   </head>
   <body>
     <main class="app-shell">
@@ -88,7 +88,10 @@
             <textarea id="note" rows="4" placeholder="時間、地點或其他補充"></textarea>
           </label>
 
-          <button class="primary-button" type="submit">新增到 Google Sheets</button>
+          <div class="form-actions">
+            <button id="submitActivityButton" class="primary-button" type="submit">新增到 Google Sheets</button>
+            <button id="cancelEditButton" type="button" hidden>取消編輯</button>
+          </div>
           <p id="formStatus" class="status-text" role="status"></p>
         </form>
 
@@ -132,6 +135,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=20260614-5"></script>
+    <script src="./app.js?v=20260615-1"></script>
   </body>
 </html>
