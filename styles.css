@@ -210,6 +210,7 @@ textarea {
 
 .panel-heading,
 .share-actions,
+.form-actions,
 .list-toolbar {
   display: flex;
   align-items: center;
@@ -237,6 +238,14 @@ label {
 
 .primary-button:hover {
   background: var(--accent-dark);
+}
+
+.form-actions {
+  align-items: stretch;
+}
+
+.form-actions .primary-button {
+  flex: 1;
 }
 
 .status-text {
@@ -362,14 +371,29 @@ label {
   color: #7f2d18;
 }
 
+.edit-button,
 .delete-button {
   min-height: 28px;
   padding: 0 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.edit-button {
+  border-color: #d8d0c2;
+  background: #fbfaf7;
+  color: var(--accent-dark);
+}
+
+.edit-button:hover {
+  border-color: var(--accent);
+  background: #f3efe6;
+}
+
+.delete-button {
   border-color: #d9c4b9;
   background: #fff7f3;
   color: #8a3a24;
-  font-size: 0.78rem;
-  font-weight: 600;
 }
 
 .delete-button:hover {
@@ -403,11 +427,13 @@ label {
 
   .panel-heading,
   .list-toolbar,
+  .form-actions,
   .share-actions {
     align-items: stretch;
   }
 
   .list-toolbar,
+  .form-actions,
   .share-actions {
     flex-direction: column;
   }
