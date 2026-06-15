@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbwmm__A8DmQuL8DPsWBjZcc5S09syJNxrpsvTvoAx2oWdVmw4j5BMN8sbLMLdL_gihV/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwBYjfuJY9W7Zw9aEKWOEByL-tB4euNi1htik087XtBF1ug_3QNKQl9zYkOwDc8dqvk/exec";
 const DEFAULT_USER = "";
 const IMPORTED_STORAGE_KEY = "activityPlanner.importedActivities";
 const USER_STORAGE_KEY = "activityPlanner.user";
