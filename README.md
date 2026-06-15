@@ -49,6 +49,8 @@ const DEFAULT_USER = "";
 - 貼上別人的分享碼：只會整合到目前瀏覽器畫面與 localStorage。
 - 匯入活動不會寫入 Google Sheets，也不會改到對方資料。
 - 刪除自己的活動會呼叫 Apps Script 從 Google Sheets 移除；刪除匯入活動只會從目前瀏覽器畫面移除。
+- 編輯自己的活動會更新 Google Sheets；編輯匯入活動只會更新目前瀏覽器畫面。
+- 刪除與編輯需要新版 `apps-script.gs`。如果 Apps Script 沒有重新部署，前端會阻止送出，避免舊後端誤新增空白活動。
 
 ## 日期格式
 
