@@ -12,6 +12,8 @@ const PERIODS = {
 const state = {
   ownActivities: [],
   importedActivities: [],
+  editingActivity: null,
+  backendFeatures: null,
 };
 
 const els = {
@@ -25,6 +27,8 @@ const els = {
   month: document.querySelector("#month"),
   datePeriod: document.querySelector("#datePeriod"),
   note: document.querySelector("#note"),
+  submitActivityButton: document.querySelector("#submitActivityButton"),
+  cancelEditButton: document.querySelector("#cancelEditButton"),
   formStatus: document.querySelector("#formStatus"),
   shareStatus: document.querySelector("#shareStatus"),
   refreshButton: document.querySelector("#refreshButton"),
@@ -48,7 +52,8 @@ function init() {
   els.userName.value = DEFAULT_USER;
   state.importedActivities = readImportedActivities();
 
-  els.form.addEventListener("submit", handleAddActivity);
+  els.form.addEventListener("submit", handleSubmitActivity);
+  els.cancelEditButton.addEventListener("click", cancelEdit);
   els.loadUserButton.addEventListener("click", loadActivities);
   els.refreshButton.addEventListener("click", loadActivities);
   els.userName.addEventListener("keydown", handleUserNameKeydown);
@@ -63,9 +68,21 @@ function init() {
   setStatus(els.formStatus, "請先輸入使用者名稱，然後按讀取活動。");
 }
 
-async function handleAddActivity(event) {
+async function handleSubmitActivity(event) {
   event.preventDefault();
 
+  const data = getFormData();
+  if (!data) return;
+
+  if (state.editingActivity) {
+    await updateActivity(data);
+    return;
+  }
+
+  await addActivity(data);
+}
+
+function getFormData() {
   const user = getCurrentUser();
   const data = {
     user,
@@ -83,9 +100,13 @@ async function handleAddActivity(event) {
     data.date = validateDateValue(data.date);
   } catch (error) {
     setStatus(els.formStatus, error.message, true);
-    return;
+    return null;
   }
 
+  return data;
+}
+
+async function addActivity(data) {
   setStatus(els.formStatus, "新增中...");
 
   try {
@@ -100,12 +121,52 @@ async function handleAddActivity(event) {
     }
 
     els.form.reset();
-    els.userName.value = user;
+    els.userName.value = data.user;
     updateDateMode();
     setStatus(els.formStatus, "已新增，活動列表已更新。");
     await loadActivities();
   } catch (error) {
     setStatus(els.formStatus, `新增失敗：${error.message}`, true);
+  }
+}
+
+async function updateActivity(data) {
+  const activity = state.editingActivity;
+
+  if (activity.source === "imported") {
+    state.importedActivities = state.importedActivities.map((item) => (
+      item.id === activity.id
+        ? normalizeImportedActivity({ ...item, ...data, user: item.user, id: item.id.replace(/^shared-/, "") })
+        : item
+    ));
+    localStorage.setItem(IMPORTED_STORAGE_KEY, JSON.stringify(state.importedActivities));
+    finishEditing("已更新匯入活動，這只會改目前瀏覽器畫面。");
+    return;
+  }
+
+  setStatus(els.formStatus, "更新中...");
+
+  try {
+    if (!(await ensureBackendFeature("update"))) return;
+
+    const response = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "update",
+        id: activity.id,
+        ...data,
+      }),
+    });
+
+    const result = await readJsonResponse(response);
+    if (!response.ok || !result.ok) {
+      throw new Error(result.error || "Google Sheets 沒有回傳成功狀態");
+    }
+
+    finishEditing("已更新，活動列表已重新整理。");
+    await loadActivities();
+  } catch (error) {
+    setStatus(els.formStatus, `更新失敗：${error.message}`, true);
   }
 }
 
@@ -129,7 +190,9 @@ async function loadActivities() {
       throw new Error("Google Sheets 回傳格式不正確");
     }
 
-    state.ownActivities = activities.map(normalizeOwnActivity);
+    state.ownActivities = activities
+      .map(normalizeOwnActivity)
+      .filter((activity) => activity.title && activity.date);
     renderActivities();
     setStatus(els.formStatus, `已載入 ${state.ownActivities.length} 筆我的活動。`);
   } catch (error) {
@@ -253,6 +316,13 @@ function makeBadges(activity, conflictType) {
     badges.append(makeElement("span", "badge conflict", getConflictLabel(conflictType)));
   }
 
+  const editButton = document.createElement("button");
+  editButton.type = "button";
+  editButton.className = "edit-button";
+  editButton.textContent = "編輯";
+  editButton.addEventListener("click", () => startEditActivity(activity));
+  badges.append(editButton);
+
   const deleteButton = document.createElement("button");
   deleteButton.type = "button";
   deleteButton.className = "delete-button";
@@ -261,6 +331,67 @@ function makeBadges(activity, conflictType) {
   badges.append(deleteButton);
 
   return badges;
+}
+
+function startEditActivity(activity) {
+  state.editingActivity = activity;
+  els.title.value = activity.title;
+  els.note.value = activity.note || "";
+  applyDateToForm(activity.dateInfo);
+  els.submitActivityButton.textContent = activity.source === "own" ? "更新到 Google Sheets" : "更新匯入活動";
+  els.cancelEditButton.hidden = false;
+  els.form.querySelector("h2").textContent = "編輯活動";
+  setStatus(els.formStatus, `正在編輯「${activity.title}」。`);
+  els.form.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function applyDateToForm(info) {
+  els.date.value = "";
+  els.startDate.value = "";
+  els.endDate.value = "";
+  els.month.value = "";
+  els.datePeriod.value = "early";
+
+  if (info.type === "range") {
+    setDateMode("range");
+    els.startDate.value = info.startDate;
+    els.endDate.value = info.endDate;
+    return;
+  }
+
+  if (info.type === "fuzzy") {
+    setDateMode("fuzzy");
+    els.month.value = info.month;
+    els.datePeriod.value = info.period;
+    return;
+  }
+
+  setDateMode("exact");
+  els.date.value = info.raw || "";
+}
+
+function setDateMode(mode) {
+  els.dateModeInputs.forEach((input) => {
+    input.checked = input.value === mode;
+  });
+  updateDateMode();
+}
+
+function cancelEdit() {
+  finishEditing("已取消編輯。");
+}
+
+function finishEditing(message) {
+  const user = getCurrentUser();
+  state.editingActivity = null;
+  els.form.reset();
+  els.userName.value = user;
+  els.submitActivityButton.textContent = "新增到 Google Sheets";
+  els.cancelEditButton.hidden = true;
+  els.form.querySelector("h2").textContent = "新增活動";
+  updateDateMode();
+  renderActivities();
+  setStatus(els.formStatus, message);
 }
 
 function makeElement(tag, className, text) {
@@ -356,6 +487,8 @@ async function deleteActivity(activity) {
   setStatus(els.formStatus, "刪除中...");
 
   try {
+    if (!(await ensureBackendFeature("delete"))) return;
+
     const response = await fetch(API_URL, {
       method: "POST",
       body: JSON.stringify({
@@ -375,6 +508,26 @@ async function deleteActivity(activity) {
   } catch (error) {
     setStatus(els.formStatus, `刪除失敗：${error.message}`, true);
   }
+}
+
+async function ensureBackendFeature(feature) {
+  if (!state.backendFeatures) {
+    const response = await fetch(`${API_URL}?action=version&t=${Date.now()}`);
+    const result = await readJsonResponse(response);
+
+    state.backendFeatures = Array.isArray(result.features) ? result.features : [];
+  }
+
+  if (!state.backendFeatures.includes(feature)) {
+    setStatus(
+      els.formStatus,
+      "Apps Script 後端還沒更新，請先貼上最新版 apps-script.gs 並重新部署，否則會被舊後端誤新增成空白活動。",
+      true
+    );
+    return false;
+  }
+
+  return true;
 }
 
 function getSortedActivities() {
@@ -465,7 +618,7 @@ function normalizeOwnActivity(activity) {
 function normalizeImportedActivity(activity) {
   const date = normalizeDateValue(activity.date);
   return {
-    id: `shared-${activity.id || crypto.randomUUID()}`,
+    id: String(activity.id || "").startsWith("shared-") ? String(activity.id) : `shared-${activity.id || crypto.randomUUID()}`,
     user: String(activity.user || "Unknown"),
     title: String(activity.title || ""),
     date,
