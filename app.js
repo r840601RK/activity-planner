@@ -9,6 +9,7 @@ const PERIODS = {
   late: { label: "月末", sortDay: "25" },
 };
 const WEEKDAYS = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
+const SHEET_TIME_ZONE = "Asia/Taipei";
 
 const state = {
   ownActivities: [],
@@ -649,7 +650,7 @@ function normalizeDateValue(value) {
 
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
-  return date.toISOString().slice(0, 10);
+  return formatDateInSheetTimeZone(date);
 }
 
 function parseDateInfo(value) {
@@ -768,6 +769,17 @@ function getWeekdayLabel(year, month, day) {
   const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
   if (Number.isNaN(date.getTime())) return "";
   return WEEKDAYS[date.getUTCDay()];
+}
+
+function formatDateInSheetTimeZone(date) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: SHEET_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
 }
 
 function encodeShareCode(activities) {
