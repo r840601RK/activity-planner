@@ -8,6 +8,7 @@ const PERIODS = {
   middle: { label: "月中", sortDay: "15" },
   late: { label: "月末", sortDay: "25" },
 };
+const WEEKDAYS = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
 
 const state = {
   ownActivities: [],
@@ -717,13 +718,12 @@ function getPeriodBounds(month, period) {
     return { startDate: `${month}-11`, endDate: `${month}-20` };
   }
 
-  const lastDay = new Date(`${month}-01T00:00:00`);
-  lastDay.setMonth(lastDay.getMonth() + 1);
-  lastDay.setDate(0);
+  const [yearText, monthText] = month.split("-");
+  const lastDay = new Date(Date.UTC(Number(yearText), Number(monthText), 0)).getUTCDate();
 
   return {
     startDate: `${month}-21`,
-    endDate: `${month}-${String(lastDay.getDate()).padStart(2, "0")}`,
+    endDate: `${month}-${String(lastDay).padStart(2, "0")}`,
   };
 }
 
@@ -747,24 +747,27 @@ function formatActivityDate(info) {
 
   if (info.type !== "exact") return info.raw;
 
-  const date = new Date(`${info.raw}T00:00:00`);
-  if (Number.isNaN(date.getTime())) return info.raw;
-  return new Intl.DateTimeFormat("zh-Hant", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    weekday: "short",
-  }).format(date);
+  return formatDateOnly(info.raw, true);
 }
 
 function formatShortDate(value) {
-  const date = new Date(`${value}T00:00:00`);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("zh-Hant", {
-    month: "2-digit",
-    day: "2-digit",
-    weekday: "short",
-  }).format(date);
+  return formatDateOnly(value, false);
+}
+
+function formatDateOnly(value, includeYear) {
+  const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return value;
+
+  const [, year, month, day] = match;
+  const weekday = getWeekdayLabel(year, month, day);
+  const dateText = includeYear ? `${year}/${month}/${day}` : `${month}/${day}`;
+  return `${dateText}（${weekday}）`;
+}
+
+function getWeekdayLabel(year, month, day) {
+  const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+  if (Number.isNaN(date.getTime())) return "";
+  return WEEKDAYS[date.getUTCDay()];
 }
 
 function encodeShareCode(activities) {
