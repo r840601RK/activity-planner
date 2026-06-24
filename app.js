@@ -15,7 +15,8 @@ const state = {
   ownActivities: [],
   importedActivities: [],
   editingActivity: null,
-  backendFeatures: null,
+  backendFeatures: ["delete", "update"],
+  pendingActivityIds: new Set(),
 };
 
 const els = {
@@ -72,16 +73,26 @@ function init() {
 
 async function handleSubmitActivity(event) {
   event.preventDefault();
+  if (els.submitActivityButton.disabled) return;
 
   const data = getFormData();
   if (!data) return;
 
+  setFormSubmitting(true);
   if (state.editingActivity) {
-    await updateActivity(data);
+    try {
+      await updateActivity(data);
+    } finally {
+      setFormSubmitting(false);
+    }
     return;
   }
 
-  await addActivity(data);
+  try {
+    await addActivity(data);
+  } finally {
+    setFormSubmitting(false);
+  }
 }
 
 function getFormData() {
@@ -122,11 +133,17 @@ async function addActivity(data) {
       throw new Error(result.error || "Google Sheets 沒有回傳成功狀態");
     }
 
-    els.form.reset();
-    els.userName.value = data.user;
-    updateDateMode();
-    setStatus(els.formStatus, "已新增，活動列表已更新。");
-    await loadActivities();
+    if (result.activity) {
+      state.ownActivities.push(normalizeOwnActivity(result.activity));
+      resetActivityForm(data.user);
+      renderActivities();
+      setStatus(els.formStatus, "已新增，活動列表已更新。");
+      return;
+    }
+
+    resetActivityForm(data.user);
+    setStatus(els.formStatus, "已新增，正在同步活動列表...");
+    loadActivities();
   } catch (error) {
     setStatus(els.formStatus, `新增失敗：${error.message}`, true);
   }
@@ -165,8 +182,12 @@ async function updateActivity(data) {
       throw new Error(result.error || "Google Sheets 沒有回傳成功狀態");
     }
 
-    finishEditing("已更新，活動列表已重新整理。");
-    await loadActivities();
+    state.ownActivities = state.ownActivities.map((item) => (
+      item.id === activity.id
+        ? normalizeOwnActivity({ ...item, ...data, id: activity.id })
+        : item
+    ));
+    finishEditing("已更新活動。");
   } catch (error) {
     setStatus(els.formStatus, `更新失敗：${error.message}`, true);
   }
@@ -328,7 +349,8 @@ function makeBadges(activity, conflictType) {
   const deleteButton = document.createElement("button");
   deleteButton.type = "button";
   deleteButton.className = "delete-button";
-  deleteButton.textContent = "刪除";
+  deleteButton.disabled = state.pendingActivityIds.has(activity.id);
+  deleteButton.textContent = deleteButton.disabled ? "刪除中..." : "刪除";
   deleteButton.addEventListener("click", () => deleteActivity(activity));
   badges.append(deleteButton);
 
@@ -466,6 +488,8 @@ function clearImportedActivities() {
 }
 
 async function deleteActivity(activity) {
+  if (state.pendingActivityIds.has(activity.id)) return;
+
   const message = activity.source === "own"
     ? `確定要刪除「${activity.title}」嗎？這會從 Google Sheets 移除。`
     : `確定要從畫面移除「${activity.title}」嗎？`;
@@ -487,6 +511,8 @@ async function deleteActivity(activity) {
   }
 
   setStatus(els.formStatus, "刪除中...");
+  state.pendingActivityIds.add(activity.id);
+  renderActivities();
 
   try {
     if (!(await ensureBackendFeature("delete"))) return;
@@ -502,14 +528,27 @@ async function deleteActivity(activity) {
 
     const result = await readJsonResponse(response);
     if (!response.ok || !result.ok) {
-      throw new Error(result.error || "Google Sheets 沒有回傳成功狀態");
+      const stillExists = await activityStillExists(activity.id, user);
+      if (stillExists) {
+        throw new Error(result.error || "Google Sheets 沒有回傳成功狀態");
+      }
     }
 
-    setStatus(els.formStatus, "已刪除，活動列表已更新。");
-    await loadActivities();
+    state.ownActivities = state.ownActivities.filter((item) => item.id !== activity.id);
+    setStatus(els.formStatus, "已刪除活動。");
   } catch (error) {
     setStatus(els.formStatus, `刪除失敗：${error.message}`, true);
+  } finally {
+    state.pendingActivityIds.delete(activity.id);
+    renderActivities();
   }
+}
+
+async function activityStillExists(id, user) {
+  const response = await fetch(`${API_URL}?user=${encodeURIComponent(user)}&t=${Date.now()}`);
+  const activities = await readJsonResponse(response);
+  if (!response.ok || !Array.isArray(activities)) return true;
+  return activities.some((activity) => String(activity.id) === String(id));
 }
 
 async function ensureBackendFeature(feature) {
@@ -802,6 +841,24 @@ function decodeShareCode(code) {
 function setStatus(element, message, isError = false) {
   element.textContent = message;
   element.style.color = isError ? "var(--warn)" : "var(--muted)";
+}
+
+function setFormSubmitting(isSubmitting) {
+  els.submitActivityButton.disabled = isSubmitting;
+  if (isSubmitting) {
+    els.submitActivityButton.textContent = state.editingActivity ? "更新中..." : "新增中...";
+    return;
+  }
+
+  els.submitActivityButton.textContent = state.editingActivity
+    ? (state.editingActivity.source === "own" ? "更新到 Google Sheets" : "更新匯入活動")
+    : "新增到 Google Sheets";
+}
+
+function resetActivityForm(user) {
+  els.form.reset();
+  els.userName.value = user;
+  updateDateMode();
 }
 
 async function readJsonResponse(response) {
