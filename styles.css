@@ -55,6 +55,15 @@ button:hover {
   background: #f3efe6;
 }
 
+button:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+button:disabled:hover {
+  border-color: var(--line);
+}
+
 .app-shell {
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;
